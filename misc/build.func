@@ -269,7 +269,7 @@ get_current_ip() {
       CURRENT_IP=$(ip -4 addr show eth0 | awk '/inet / {print $2}' | cut -d/ -f1 | head -n 1)
     else
       CURRENT_IP="Unknown"
-    fi
+    end
   fi
   echo "$CURRENT_IP"
 }
@@ -513,7 +513,7 @@ advanced_settings() {
           "24.10" "Oracular" OFF \
           3>&1 1>&2 2>&3); then
           if [ -n "$var_version" ]; then
-            echo -e "${OSVERSION${BOLD}${DGN}Version: ${BGN}$var_version${CL}"
+            echo -e "${OSVERSION}${BOLD}${DGN}Version: ${BGN}$var_version${CL}"
           fi
         else
           exit_script
@@ -534,6 +534,20 @@ advanced_settings() {
       fi
     done
   fi
+
+  if [[ "$var_os" == "alpine" ]]; then
+    if var_version=$(whiptail --backtitle "Proxmox VE Helper Scripts" --title "ALPINE VERSION" --radiolist "Choose Version" 10 58 2 \
+      "3.18" "Latest" ON \
+      "3.17" "Previous" OFF \
+      3>&1 1>&2 2>&3); then
+      if [ -n "$var_version" ]; then
+        echo -e "${OSVERSION}${BOLD}${DGN}Version: ${BGN}$var_version${CL}"
+      fi
+    else
+      exit_script
+    fi
+  fi
+
   # Setting Default Tag for Advanced Settings
   TAGS="community-script;${var_tags:-}"
   CT_DEFAULT_TYPE="${CT_TYPE}"
@@ -1202,7 +1216,6 @@ EOF'
 description() {
   IP=$(pct exec "$CTID" ip a s dev eth0 | awk '/inet / {print $2}' | cut -d/ -f1)
 
-  # Generate LXC Description
   DESCRIPTION=$(
     cat <<EOF
 <div align='center'>
@@ -1234,7 +1247,6 @@ description() {
 EOF
   )
 
-  # Set Description in LXC
   pct set "$CTID" -description "$DESCRIPTION"
 
   if [[ -f /etc/systemd/system/ping-instances.service ]]; then
