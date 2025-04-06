@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+source <(curl -fsSL https://raw.githubusercontent.com/AlecWiese/ProxmoxVE-Scripts/main/misc/build.func)
+# Copyright (c) 2021-2025 tteck
+# Author: tteck (tteckster)
+# License: MIT | https://github.com/community-scripts/ProxmoxVE/raw/main/LICENSE
+# Source: https://overseerr.dev/
+# Note: This is the OIDC-enabled fork of Overseerr from https://github.com/ankarhem/overseerr-oidc
+
+APP="Overseerr-OIDC"
+var_tags="media"
+var_cpu="2"
+var_ram="2048"
+var_disk="8"
+var_os="debian"
+var_version="12"
+var_unprivileged="1"
+
+header_info "$APP"
+variables
+color
+catch_errors
+
+function update_script() {
+    header_info
+    check_container_storage
+    check_container_resources
+    if [[ ! -d /opt/overseerr-oidc ]]; then
+        msg_error "No ${APP} Installation Found!"
+        exit
+    fi
+    msg_info "Updating $APP"
+    systemctl stop overseerr-oidc
+    cd /opt/overseerr-oidc || exit
+    output=$(git pull)
+    $STD git pull
+    if echo "$output" | grep -q "Already up to date."; then
+        msg_ok " $APP is already up to date."
+        systemctl start overseerr-oidc
+        exit
+    fi
+    $STD yarn install
+    $STD yarn build
+    systemctl start overseerr-oidc
+    msg_ok "Updated $APP"
+    exit
+}
+
+start
+build_container
+description
+
+msg_ok "Completed Successfully!\n"
+echo -e "${CREATING}${GN}${APP} setup has been successfully initialized!${CL}"
+echo -e "${INFO}${YW} Access it using the following URL:${CL}"
+echo -e "${TAB}${GATEWAY}${BGN}http://${IP}:5055${CL}"
